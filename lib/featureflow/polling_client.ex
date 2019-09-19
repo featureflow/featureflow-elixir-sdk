@@ -1,13 +1,16 @@
 defmodule Featureflow.PollingClient do
   use GenServer
 
+  alias Featureflow.Feature
+
   @timeout 30000
 
   @spec start_link(String.t()) :: GenServer.on_start()
+
   def start_link(api_key), do: GenServer.start_link(__MODULE__, api_key)
 
   @impl true
-  def init(api_key) do 
+  def init([api_key]) do 
     state = %{
       api_key: api_key,
       url: Application.get_env(:featureflow, :api_endpoint, "https://app.featureflow.io/api/sdk/v1/features"),
@@ -21,16 +24,17 @@ defmodule Featureflow.PollingClient do
   end
 
   @impl true
-  def handle_info(:timeout, %{url: url, headers: headers}=state) do
+  def handle_info(:timeout, %{api_key: api_key, url: url, headers: headers}=state) do
     with {:ok, 200, resp_headers, resp} <- :hackney.request(:get, url, headers, "", []),
          {:ok, json} <- :hackney.body(resp),
-         {:ok, features} <- Poison.decode(json) do
+         {:ok, features} <- Poison.decode(json, keys: :atoms) do
       new_headers =
         :proplists.get_value("ETag",resp_headers, nil)
         |> update_etag(headers)
 
       features
-      |> IO.inspect
+      |> Enum.map(fn {feature_key, v} -> {{api_key, feature_key}, v} end)
+      |> (&(:ets.insert(:features, &1))).()
       {:noreply, %{state | headers: new_headers}, @timeout}
     else
       {:ok, code, _resp_headers, ref} ->

@@ -1,18 +1,13 @@
 defmodule Featureflow do
   @moduledoc """
-  Documentation for Featureflow.
+  Featureflow main entry point
+  Example:
+  apiKey
+  |> Featureflow.init()
+  |> Featureflow.Client.evaluate(feature_key)
   """
 
-  @doc """
-  Hello world.
-
-  ## Examples
-
-      iex> Featureflow.hello()
-      :world
-
-  """
-  def hello do
-    :world
+  def init(api_key, config \\ %{}) do
+    Process.whereis(String.to_atom(api_key))
   end
 end

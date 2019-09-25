@@ -24,12 +24,16 @@ defmodule Featureflow.Feature do
 
     @type t() :: %Rule{
       defaultRule: boolean(),
-      audience: [ Rule.Condition.t() | Rule.VariantSplit.t() ]
+      audience: %{
+        conditions: [ Rule.Condition.t() ],
+      },
+      variantSplits: [ Rule.VariantSplit.t() ]
     }
 
     defstruct [ 
       defaultRule: false,
-      audience: []
+      audience: [],
+      variantSplits: []
     ]
 
     defmodule Condition do

@@ -4,10 +4,10 @@ defmodule Featureflow.User do
   @type key() :: String.t()
 
   @type t() :: %User{
-    key: key(),
-    attributes: %{},
-    sessionAttributes: %{}
-  }
+          key: key(),
+          attributes: %{},
+          sessionAttributes: %{}
+        }
 
   defstruct [
     :key,

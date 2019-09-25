@@ -1,67 +1,87 @@
 defmodule Featureflow.Client do
+  alias __MODULE__
   alias Featureflow.Feature
   alias Featureflow.Feature.Rule
-  alias Featureflow.Feature.Rule.Condition
-  alias Featureflow.Feature.Rule.VariantSplit
   alias Featureflow.User
 
-  #@spec evaluate(Client.t(), Featureflow.feature_key(), %User.t()) :: String.t()
-  def evaluate(featureflow, feature_key, user \\ nil) do
+  @defaultFeatureVariant "off"
+
+  @type t() :: pid()
+
+  @type evaluate() :: String.t()
+
+  @spec evaluate(Client.t(), Feature.feature_key(), User.t()) :: evaluate()
+  def evaluate(featureflow, feature_key, user) do
     with [{_, feaure_map}] <- :ets.lookup(:features, {featureflow, feature_key}),
          {true, _} <- is_enabled(feaure_map) do
       evaluate_rules(struct(%Feature{}, feaure_map), user)
     else
-      [] ->
-          @defaultFeatureVariant
+
       {false, default} ->
         default
+
       {:default, default} ->
         default
+      _ ->
+        @defaultFeatureVariant
     end
   end
 
+  @spec value(evaluate()) :: String.t()
   @doc "Evaluate.value() for compatibility with spec"
   def value(evaluate), do: evaluate
 
+  @spec is(evaluate(), String.t()) :: boolean()
   def is(evaluate, variant), do: evaluate == variant
 
+  @spec isOn(evaluate()) :: boolean()
   def isOn(evaluate), do: is(evaluate, "on")
 
+  @spec isOff(evaluate()) :: boolean()
   def isOff(evaluate), do: is(evaluate, "off")
 
   defp is_enabled(%{enabled: enabled, offVariantKey: offVariantKey}), do: {enabled, offVariantKey}
 
-  defp evaluate_rules(%Feature{rules: rules}=feature, user) do
-    Enum.reduce_while(rules, feature, &(maybe_evaluate_rule(struct(%Rule{}, &1), &2, user)))
+  @spec evaluate_rules(Feature.t(), User.t()) :: evaluate()
+  defp evaluate_rules(%Feature{rules: rules} = feature, user) do
+    Enum.reduce_while(rules, feature, &maybe_evaluate_rule(struct(%Rule{}, &1), &2, user))
   end
 
-  defp maybe_evaluate_rule(%Rule{defaultRule: true} = rule, %Feature{}=feature, user) do
+  defp maybe_evaluate_rule(%Rule{defaultRule: true} = rule, %Feature{} = feature, user) do
     {:halt, evaluate_rule(rule, feature, user)}
   end
-  defp maybe_evaluate_rule(%Rule{audience: %{conditions: nil}} = rule, %Feature{}=feature, user) do
+
+  defp maybe_evaluate_rule(%Rule{audience: %{conditions: nil}} = rule, %Feature{} = feature, user) do
     {:halt, evaluate_rule(rule, feature, user)}
   end
-  defp maybe_evaluate_rule(_rule, %Feature{}=feature, nil), do: {:cont, feature}
+
+  defp maybe_evaluate_rule(_rule, %Feature{} = feature, nil), do: {:cont, feature}
+
   defp maybe_evaluate_rule(
-    rule, 
-    %Feature{}=feature,
-    %User{attributes: attrs, sessionAttributes: session_attrs}=user
-  ) do
+         rule,
+         %Feature{} = feature,
+         %User{attributes: attrs, sessionAttributes: session_attrs} = user
+       ) do
     attributes = Map.merge(session_attrs, attrs)
-
 
     Enum.reduce(
       rule.audience.conditions,
       {:cont, feature},
-      fn %{target: nil}, acc ->
+      fn
+        %{target: nil}, acc ->
           acc
+
         %{operator: op, target: target, values: vals}, acc ->
-          case  Enum.drop_while(Map.get(attributes, target, []), 
-            fn attr ->
-              not evaluate_operator(op, attr, vals) # drop_while has inverse logic
-            end) do
-            [] -> 
+          case Enum.drop_while(
+                 Map.get(attributes, target, []),
+                 fn attr ->
+                   # drop_while has inverse logic
+                   not evaluate_operator(op, attr, vals)
+                 end
+               ) do
+            [] ->
               acc
+
             _ ->
               {:halt, evaluate_rule(rule, feature, user)}
           end
@@ -69,21 +89,21 @@ defmodule Featureflow.Client do
     )
   end
 
-  defp evaluate_operator("equals", attr, [val |_]), do: attr == val
+  defp evaluate_operator("equals", attr, [val | _]), do: attr == val
 
   defp evaluate_operator("contains", attr, [val | _]) when is_binary(attr) do
     String.contains?(attr, val)
   end
 
-  defp evaluate_operator("startsWith", attr, [val |_]) when is_binary(attr) do
+  defp evaluate_operator("startsWith", attr, [val | _]) when is_binary(attr) do
     String.starts_with?(attr, val)
   end
 
-  defp evaluate_operator("endsWith", attr, [val |_]) when is_binary(attr) do
+  defp evaluate_operator("endsWith", attr, [val | _]) when is_binary(attr) do
     String.ends_with?(attr, val)
   end
 
-  defp evaluate_operator("matches", attr, [val |_]) when is_binary(attr) do
+  defp evaluate_operator("matches", attr, [val | _]) when is_binary(attr) do
     {:ok, regex} = Regex.compile(val)
     String.match?(attr, regex)
   end
@@ -92,26 +112,29 @@ defmodule Featureflow.Client do
   defp evaluate_operator("notIn", attr, vals) when is_binary(attr), do: attr not in vals
 
   defp evaluate_operator("greaterThan", attr, [val | _]) when is_number(attr), do: attr > val
-  defp evaluate_operator("greaterOrEqualThan", attr, [val | _]) when is_number(attr), do: attr >= val
+
+  defp evaluate_operator("greaterOrEqualThan", attr, [val | _]) when is_number(attr),
+    do: attr >= val
+
   defp evaluate_operator("lessThan", attr, [val | _]) when is_number(attr), do: attr < val
   defp evaluate_operator("lessOrEqualThan", attr, [val | _]) when is_number(attr), do: attr <= val
 
-  defp evaluate_operator("after", attr, [val |_]) when is_binary(attr) do
+  defp evaluate_operator("after", attr, [val | _]) when is_binary(attr) do
     with {:ok, first, _} <- DateTime.from_iso8601(attr),
-         {:ok, second, _} <- DateTime.from_iso8601(attr) do
+         {:ok, second, _} <- DateTime.from_iso8601(val) do
       first > second
     else
-      _ -> 
+      _ ->
         false
     end
   end
 
-  defp evaluate_operator("before", attr, [val |_]) when is_binary(attr) do
+  defp evaluate_operator("before", attr, [val | _]) when is_binary(attr) do
     with {:ok, first, _} <- DateTime.from_iso8601(attr),
-         {:ok, second, _} <- DateTime.from_iso8601(attr) do
+         {:ok, second, _} <- DateTime.from_iso8601(val) do
       first < second
     else
-      _ -> 
+      _ ->
         false
     end
   end
@@ -120,8 +143,9 @@ defmodule Featureflow.Client do
     false
   end
 
-  defp evaluate_rule(rule, %Feature{variationSalt: variationSalt}=feature, user) do
-    IO.inspect rule
+  defp evaluate_rule(rule, %Feature{variationSalt: variationSalt} = feature, user) do
+    IO.inspect(rule)
+
     variationSalt
     |> calculateHash(feature.key, user.key)
     |> getVariantValue()
@@ -142,15 +166,18 @@ defmodule Featureflow.Client do
   end
 
   def getVarintSplitKey(variant_value, vs) do
-    Enum.reduce_while(vs,
+    Enum.reduce_while(
+      vs,
       0,
       fn %{variantKey: key, split: split}, percent ->
         percent_new = percent + split
+
         if percent_new >= variant_value do
           {:halt, key}
         else
           {:cont, percent_new}
         end
-      end)
+      end
+    )
   end
 end

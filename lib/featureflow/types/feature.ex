@@ -4,12 +4,12 @@ defmodule Featureflow.Feature do
   @type feature_key() :: String.t()
 
   @type t :: %Feature{
-    key: feature_key(),
-    variationSalt: String.t(),
-    enabled: boolean(),
-    offVariantKey: String.t(),
-    rules: [ Feature.Rule.t() ]
-  }
+          key: feature_key(),
+          variationSalt: String.t(),
+          enabled: boolean(),
+          offVariantKey: String.t(),
+          rules: [Feature.Rule.t()]
+        }
 
   defstruct [
     :key,
@@ -23,27 +23,25 @@ defmodule Featureflow.Feature do
     alias __MODULE__
 
     @type t() :: %Rule{
-      defaultRule: boolean(),
-      audience: %{
-        conditions: [ Rule.Condition.t() ],
-      },
-      variantSplits: [ Rule.VariantSplit.t() ]
-    }
+            defaultRule: boolean(),
+            audience: %{
+              conditions: [Rule.Condition.t()]
+            },
+            variantSplits: [Rule.VariantSplit.t()]
+          }
 
-    defstruct [ 
-      defaultRule: false,
-      audience: %{conditions: nil},
-      variantSplits: []
-    ]
+    defstruct defaultRule: false,
+              audience: %{conditions: nil},
+              variantSplits: []
 
     defmodule Condition do
       alias __MODULE__
 
       @type t() :: %Condition{
-        target: String.t(),
-        operator: String.t(),
-        values: [ term() ]
-      }
+              target: String.t(),
+              operator: String.t(),
+              values: [term()]
+            }
 
       defstruct [
         :target,
@@ -56,9 +54,9 @@ defmodule Featureflow.Feature do
       alias __MODULE__
 
       @type t() :: %VariantSplit{
-        variantKey: String.t(),
-        split: non_neg_integer()
-      }
+              variantKey: String.t(),
+              split: non_neg_integer()
+            }
 
       defstruct [
         :variantKey,

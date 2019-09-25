@@ -7,7 +7,10 @@ defmodule Featureflow.MixProject do
       version: "0.1.0",
       elixir: "~> 1.8",
       start_permanent: Mix.env() == :prod,
-      deps: deps()
+      deps: deps(),
+      dialyzer: [
+        plt_add_deps: :project
+      ]
     ]
   end
 
@@ -24,7 +27,9 @@ defmodule Featureflow.MixProject do
   defp deps do
     [
       {:hackney, github: "benoitc/hackney"},
-      {:poison, "~> 4.0"}
+      {:poison, "~> 4.0"},
+      {:ex_machina, "~> 2.3"},
+      {:dialyxir, "~> 1.0.0-rc.7", only: [:dev, :test], runtime: false}
     ]
   end
 end

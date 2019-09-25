@@ -20,6 +20,15 @@ defmodule Featureflow.Client do
     end
   end
 
+  @doc "Evaluate.value() for compatibility with spec"
+  def value(evaluate), do: evaluate
+
+  def is(evaluate, variant), do: evaluate == variant
+
+  def isOn(evaluate), do: is(evaluate, "on")
+
+  def isOff(evaluate), do: is(evaluate, "off")
+
   defp is_enabled(%{enabled: enabled, offVariantKey: offVariantKey}), do: {enabled, offVariantKey}
 
   defp evaluate_rules(%Feature{rules: rules}=feature, user) do

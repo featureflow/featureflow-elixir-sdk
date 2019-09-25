@@ -16,12 +16,12 @@ defmodule Featureflow.Client do
          {true, _} <- is_enabled(feaure_map) do
       evaluate_rules(struct(%Feature{}, feaure_map), user)
     else
-
       {false, default} ->
         default
 
       {:default, default} ->
         default
+
       _ ->
         @defaultFeatureVariant
     end

@@ -25,7 +25,7 @@ defmodule Featureflow.PollingClient do
         ),
       headers: [
         "Content-Type": "application/json",
-        "Authorization": "Bearer #{api_key}"
+        Authorization: "Bearer #{api_key}"
       ]
     }
 

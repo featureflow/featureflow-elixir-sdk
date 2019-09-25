@@ -32,7 +32,7 @@ defmodule Featureflow.Feature do
 
     defstruct [ 
       defaultRule: false,
-      audience: [],
+      audience: %{conditions: nil},
       variantSplits: []
     ]
 

@@ -14,15 +14,16 @@ defmodule Featureflow.PollingClient do
   @spec init([String.t() | Client.t()]) :: {:ok, map(), non_neg_integer()}
   @impl true
   def init([api_key, client]) do
-    state = %{
-      api_key: api_key,
-      client: client,
-      url:
+    base_url = 
         Application.get_env(
           :featureflow,
           :api_endpoint,
-          "https://app.featureflow.io/api/sdk/v1/features"
-        ),
+          "https://app.featureflow.io/api/sdk/v1"
+        )
+    state = %{
+      api_key: api_key,
+      client: client,
+      url: "#{base_url}/features",
       headers: [
         "Content-Type": "application/json",
         Authorization: "Bearer #{api_key}"

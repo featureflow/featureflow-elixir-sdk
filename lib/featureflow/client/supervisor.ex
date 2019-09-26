@@ -11,7 +11,7 @@ defmodule Featureflow.Client.Supervisor do
   def init([api_key]) do
     children = [
       {Featureflow.PollingClient, [api_key, self()]},
-      {Featureflow.Events, [api_key]}
+      {Featureflow.Events, [api_key, self()]}
     ]
 
     :features = :ets.new(:features, [:set, :named_table, :public])

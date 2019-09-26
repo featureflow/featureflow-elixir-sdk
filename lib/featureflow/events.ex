@@ -5,6 +5,9 @@ defmodule Featureflow.Events do
   alias Featureflow.Event
   alias Featureflow.FeatureRegistration
 
+  @timeout 30_000
+  @max_queue_length 10_000
+
   def child_spec(args), do: %{id: __MODULE__, start: {__MODULE__, :start_link, args}}
 
   @spec start_link(String.t(), Client.t()) :: GenServer.on_start()
@@ -14,6 +17,11 @@ defmodule Featureflow.Events do
   @spec evaluate(Client.t(), [Event.t()]) :: :ok
   def evaluate(client, events) do
     GenServer.cast(this(client), {:events, events})
+  end
+
+  @spec register_features(Client.t(), [FeatureRegistration.t()]) :: :ok
+  def register_features(client, features) do
+    GenServer.cast(this(client), {:register, features})
   end
 
   defp this(client) do
@@ -29,6 +37,7 @@ defmodule Featureflow.Events do
     state = %{
       api_key: api_key,
       client: client,
+      events: [],
       base_url:
         Application.get_env(
           :featureflow,
@@ -42,7 +51,7 @@ defmodule Featureflow.Events do
       ]
     }
 
-    {:ok, state}
+    {:ok, state, 30}
   end
 
   @impl true
@@ -50,27 +59,47 @@ defmodule Featureflow.Events do
     request("#{base_url}/register", state, Poison.encode!(features))
   end
 
-  def handle_cast({:events, events}, %{base_url: base_url} = state) do
-    request("#{base_url}/events", state, Poison.encode!(events))
+  def handle_cast({:events, events}, %{events: old_events} = state) do
+    case events ++ old_events do
+      e when length(e) >= @max_queue_length ->
+        {:noreply, %{state | events: e}, 0}
+
+      e ->
+        {:noreply, %{state | events: e}, @timeout}
+    end
   end
 
   def handle_cast(msg, state) do
     IO.inspect("Unexpected message #{inspect(msg)} in #{__MODULE__}")
-    {:noreply, state}
+    {:noreply, state, @timeout}
+  end
+
+  @impl true
+  def handle_info(:timeout, %{events: []} = state), do: {:noreply, state, @timeout}
+
+  def handle_info(:timeout, %{base_url: base_url, events: events} = state) do
+    IO.inspect "Submitting #{length events} events"
+    request("#{base_url}/events", state, Poison.encode!(events))
+    {:noreply, %{state | events: []}, @timeout}
+  end
+
+  def handle_info(msg, state) do
+    IO.inspect("Unexpected message #{inspect(msg)} in #{__MODULE__}")
+    {:noreply, state, @timeout}
   end
 
   defp request(url, %{headers: headers}=state, body) do
     with {:ok, 200, _resp_headers, _resp} <- :hackney.request(:post, url, headers, body, []) do
-      {:noreply, state}
+      {:noreply, state, @timeout}
     else
       {:ok, code, _resp_headers, ref} ->
         {:ok, body} = :hackney.body(ref)
         IO.inspect("Server retunred code #{code} with body #{body}")
-        {:noreply, state}
+        {:noreply, state, @timeout}
 
       {:error, error} ->
         IO.inspect("An error #{inspect(error)} occured")
-        {:noreply, state}
+        {:noreply, state, @timeout}
     end
   end
 end

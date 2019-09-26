@@ -75,6 +75,7 @@ defmodule Featureflow.Client do
     else
       {false, default} ->
         %Evaluate{
+          client: client,
           value: default,
           featureKey: feature_key,
           user: user

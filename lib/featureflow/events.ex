@@ -55,8 +55,10 @@ defmodule Featureflow.Events do
   end
 
   @impl true
+  def handle_cast({:register, []}, state), do: {:noreply, state, @timeout}
+
   def handle_cast({:register, features}, %{base_url: base_url} = state) do
-    request("#{base_url}/register", state, Poison.encode!(features))
+    request(:put, "#{base_url}/register", state, Poison.encode!(features))
   end
 
   def handle_cast({:events, events}, %{events: old_events} = state) do
@@ -79,7 +81,7 @@ defmodule Featureflow.Events do
 
   def handle_info(:timeout, %{base_url: base_url, events: events} = state) do
     IO.inspect "Submitting #{length events} events"
-    request("#{base_url}/events", state, Poison.encode!(events))
+    request(:post, "#{base_url}/events", state, Poison.encode!(events))
     {:noreply, %{state | events: []}, @timeout}
   end
 
@@ -88,8 +90,8 @@ defmodule Featureflow.Events do
     {:noreply, state, @timeout}
   end
 
-  defp request(url, %{headers: headers}=state, body) do
-    with {:ok, 200, _resp_headers, _resp} <- :hackney.request(:post, url, headers, body, []) do
+  defp request(method, url, %{headers: headers}=state, body) do
+    with {:ok, 200, _resp_headers, _resp} <- :hackney.request(method, url, headers, body, []) do
       {:noreply, state, @timeout}
     else
       {:ok, code, _resp_headers, ref} ->

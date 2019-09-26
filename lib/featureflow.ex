@@ -10,10 +10,21 @@ defmodule Featureflow do
   """
 
   alias Featureflow.Client
+  alias Featureflow.Events
   # alias Featureflow.FeatureRegistration
 
   @spec init(String.t(), %{}) :: Client.t()
-  def init(api_key, _config \\ %{}) do
-    Process.whereis(String.to_atom(api_key))
+  def init(api_key, config \\ %{}) do
+    client = 
+      api_key
+      |> String.to_atom()
+      |> Process.whereis()
+    case config do
+      %{withFeatures: features} when features != [] ->
+        :ok = Events.register_features(client, features)
+        client
+      _ -> 
+        client
+    end
   end
 end

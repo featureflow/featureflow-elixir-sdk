@@ -14,7 +14,6 @@ defmodule Featureflow.Client.Supervisor do
       {Featureflow.Events, [api_key, self()]}
     ]
 
-    :features = :ets.new(:features, [:set, :named_table, :public])
     Supervisor.init(children, strategy: :one_for_one)
   end
 end

@@ -10,7 +10,8 @@ defmodule Featureflow.Application do
     children = [
       # Starts a worker by calling: Featureflow.Worker.start_link(arg)
       # {Featureflow.Worker, arg}
-      Featureflow.Supervisor
+      {Featureflow.Http, []},
+      Featureflow.Supervisor,
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html

@@ -1,7 +1,7 @@
 defmodule Featureflow.PollingClient do
   use GenServer
 
-  alias Featureflow.Client
+  alias Featureflow.{Client, Http}
 
   @timeout 30000
 
@@ -14,12 +14,13 @@ defmodule Featureflow.PollingClient do
   @spec init([String.t() | Client.t()]) :: {:ok, map(), non_neg_integer()}
   @impl true
   def init([api_key, client]) do
-    base_url = 
-        Application.get_env(
-          :featureflow,
-          :api_endpoint,
-          "https://app.featureflow.io/api/sdk/v1"
-        )
+    base_url =
+      Application.get_env(
+        :featureflow,
+        :api_endpoint,
+        "https://app.featureflow.io/api/sdk/v1"
+      )
+
     state = %{
       api_key: api_key,
       client: client,
@@ -35,26 +36,18 @@ defmodule Featureflow.PollingClient do
 
   @impl true
   def handle_info(:timeout, %{url: url, client: client, headers: headers} = state) do
-    with {:ok, 200, resp_headers, resp} <- :hackney.request(:get, url, headers, "", []),
-         {:ok, json} <- :hackney.body(resp),
-         {:ok, features} <- Poison.decode(json, keys: :atoms) do
-      new_headers =
-        :proplists.get_value("ETag", resp_headers, nil)
-        |> update_etag(headers)
+    case Http.request(:get, url, headers, "") do
+      {:ok, new_headers, features} ->
 
-      features
-      |> Enum.map(fn {feature_key, v} -> {{client, feature_key}, v} end)
-      |> (&:ets.insert(:features, &1)).()
+        features
+        |> Enum.map(fn {feature_key, v} -> {{client, feature_key}, v} end)
+        |> (&:ets.insert(:features, &1)).()
 
-      {:noreply, %{state | headers: new_headers}, @timeout}
-    else
-      {:ok, code, _resp_headers, ref} ->
-        {:ok, body} = :hackney.body(ref)
-        IO.inspect("Server retunred code #{code} with body #{body}")
+        {:noreply, %{state | headers: new_headers}, @timeout}
+      {:error, _, _} ->
         {:noreply, state, @timeout}
 
-      {:error, error} ->
-        IO.inspect("An error #{inspect(error)} occured")
+      {:error, _} ->
         {:noreply, state, @timeout}
     end
   end
@@ -64,6 +57,4 @@ defmodule Featureflow.PollingClient do
     {:noreply, state, @timeout}
   end
 
-  defp update_etag(nil, headers), do: headers
-  defp update_etag(etag, headers), do: [{"If-None-Match", etag} | headers]
 end

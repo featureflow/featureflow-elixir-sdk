@@ -15,15 +15,17 @@ defmodule Featureflow do
 
   @spec init(String.t(), %{}) :: Client.t()
   def init(api_key, config \\ %{}) do
-    client = 
+    client =
       api_key
       |> String.to_atom()
       |> Process.whereis()
+
     case config do
       %{withFeatures: features} when features != [] ->
         :ok = Events.register_features(client, features)
         client
-      _ -> 
+
+      _ ->
         client
     end
   end

@@ -1,75 +1,19 @@
 defmodule Featureflow.Client do
   alias __MODULE__
-  alias Featureflow.{Feature, User, Events, Event}
+  alias Featureflow.{Feature, User}
   alias Featureflow.Feature.Rule
+  alias Featureflow.Client.Evaluate
 
   @defaultFeatureVariant "off"
 
   @type t() :: pid()
 
-  defmodule Evaluate do
-    alias __MODULE__
-
-  @type t() :: %Evaluate{
-    client: Client.t(),
-    value: String.t(),
-    featureKey: Feature.feature_key(),
-    user: User.t()
-  }
-    defstruct [
-      :client,
-      :value,
-      :featureKey,
-      :user
-    ]
-
-    @spec value(Evaluate.t()) :: String.t()
-    @doc "Evaluate.value() for compatibility with spec"
-    def value(%Evaluate{value: value} = evaluate) do
-      publish_evaluate(evaluate, nil)
-      value
-    end
-
-    @spec is(Evaluate.t(), String.t()) :: boolean()
-    def is(%Evaluate{value: value} = evaluate, variant) do 
-      publish_evaluate(evaluate, variant)
-      value == variant
-    end
-
-    @spec isOn(Evaluate.t()) :: boolean()
-    def isOn(evaluate), do: is(evaluate, "on")
-
-    @spec isOff(Evaluate.t()) :: boolean()
-    def isOff(evaluate), do: is(evaluate, "off")
-
-    defp publish_evaluate(%Evaluate{
-      client: client,
-      value: value,
-      featureKey: feature_key,
-      user: user
-    },
-    expected) do
-      event =
-        %Event{
-          featureKey: feature_key,
-          evaluatedVariant: value,
-          expectedVariant: expected,
-          user: user
-        }
-      :ok = Events.evaluate(client, [event])
-      value
-    end
-  end
-
-  
-
-
   @spec evaluate(Client.t(), Feature.feature_key(), User.t()) :: Evaluate.t()
   def evaluate(client, feature_key, user) do
     with [{_, feaure_map}] <- :ets.lookup(:features, {client, feature_key}),
          {true, _} <- is_enabled(feaure_map) do
-      %Feature{} 
-      |> struct(feaure_map) 
+      %Feature{}
+      |> struct(feaure_map)
       |> evaluate_rules(user)
       |> Map.put(:client, client)
     else
@@ -80,6 +24,7 @@ defmodule Featureflow.Client do
           featureKey: feature_key,
           user: user
         }
+
       {:default, default} ->
         %Evaluate{
           client: client,
@@ -93,12 +38,11 @@ defmodule Featureflow.Client do
     end
   end
 
-
   defp is_enabled(%{enabled: enabled, offVariantKey: offVariantKey}), do: {enabled, offVariantKey}
 
   @spec evaluate_rules(Feature.t(), User.t()) :: Evaluate.t()
   defp evaluate_rules(%Feature{rules: rules} = feature, user) do
-    value = 
+    value =
       rules
       |> Enum.reduce_while(feature, &maybe_evaluate_rule(struct(%Rule{}, &1), &2, user))
 

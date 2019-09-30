@@ -11,7 +11,9 @@ defmodule Featureflow.Supervisor do
     children =
       :featureflow
       |> Application.get_env(:apiKeys, [])
-      |> Enum.map(&{Featureflow.Client.Supervisor, [&1]})
+      |> Enum.map(&Supervisor.child_spec({Featureflow.Client.Supervisor, [&1]}, id: &1))
+
+    :features = :ets.new(:features, [:set, :named_table, :public])
 
     Supervisor.init(children, strategy: :one_for_one)
   end

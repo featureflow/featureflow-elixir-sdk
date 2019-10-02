@@ -1,4 +1,9 @@
 defmodule Featureflow.Http do
+  @moduledoc """
+  Http requests wrapper for easy maintinence and testing.
+  Uses hackney under the hood for live and GenServer storing requests in state for testing.
+  """
+
   @http_module Application.get_env(:featureflow, :http_request_module, Featureflow.Http.Live)
 
   def child_spec(_), do: %{id: __MODULE__, start: {__MODULE__, :start_link, []}}

@@ -13,6 +13,7 @@ defmodule Featureflow do
   alias Featureflow.Events
   # alias Featureflow.FeatureRegistration
 
+  @doc "Featureflow.init from the spec"
   @spec init(String.t(), %{}) :: Client.t()
   def init(api_key, config \\ %{}) do
     client =

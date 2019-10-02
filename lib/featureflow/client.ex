@@ -1,4 +1,18 @@
 defmodule Featureflow.Client do
+  @moduledoc """
+  This module includes all functions and logic for FeatureflowClient.evaluate from spec.
+  It includes functionality from the list below.
+  * Operators, 
+  * EvaluateHelpers, 
+  * Evaluate._calculateVariant
+
+  See the following docs for more details
+  https://github.com/featureflow/featureflow-sdk-implementation-guide/blob/master/Implementation/2.FeatureflowClient.md
+  https://github.com/featureflow/featureflow-sdk-implementation-guide/blob/master/Implementation/4.EvaluateHelpers.md
+  https://github.com/featureflow/featureflow-sdk-implementation-guide/blob/master/Implementation/5.Operators.md
+  https://github.com/featureflow/featureflow-sdk-implementation-guide/blob/master/Implementation/3.Evaluate.md
+  """
+
   alias __MODULE__
   alias Featureflow.{Feature, User}
   alias Featureflow.Feature.Rule
@@ -10,6 +24,7 @@ defmodule Featureflow.Client do
 
   @type t() :: pid()
 
+  @doc "FeatureflowClient.evaluate implemetation"
   @spec evaluate(Client.t(), Feature.feature_key(), User.t()) :: Evaluate.t()
   def evaluate(client, feature_key, user) do
     with [{_, feaure_map}] <- :ets.lookup(:features, {client, feature_key}),

@@ -1,6 +1,11 @@
 defmodule Featureflow.Events do
   use GenServer
 
+  @moduledoc """
+  This module implements functionality for Events pushing to featureflow.io server.
+  See https://github.com/featureflow/featureflow-sdk-implementation-guide/blob/master/Implementation/7.FeatureflowEvents.md
+  """
+
   alias Featureflow.{Client, Event, Http}
   alias Featureflow.FeatureRegistration
 
@@ -13,11 +18,13 @@ defmodule Featureflow.Events do
 
   def start_link(api_key, client), do: GenServer.start_link(__MODULE__, [api_key, client])
 
+  @doc "Adds the evaluation event to queue to push to the server"
   @spec evaluate(Client.t(), [Event.t()]) :: :ok
   def evaluate(client, events) do
     GenServer.cast(this(client), {:events, events})
   end
 
+  @doc "Registers new features on the server"
   @spec register_features(Client.t(), [FeatureRegistration.t()]) :: :ok
   def register_features(client, features) do
     GenServer.cast(this(client), {:register, features})

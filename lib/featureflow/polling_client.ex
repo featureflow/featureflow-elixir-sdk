@@ -1,6 +1,11 @@
 defmodule Featureflow.PollingClient do
   use GenServer
 
+  @moduledoc """
+  Implementation ot the PollingClient.
+  See https://github.com/featureflow/featureflow-sdk-implementation-guide/blob/master/Implementation/6.PollingClient.md
+  """
+
   alias Featureflow.{Client, Http}
 
   @timeout 30000

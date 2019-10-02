@@ -1,6 +1,11 @@
 defmodule Featureflow.Feature do
   alias __MODULE__
 
+  @moduledoc """
+  Feature json schema validation and implementation.
+  See https://github.com/featureflow/featureflow-sdk-implementation-guide/blob/master/Implementation/objects/Feature.md
+  """
+
   @type feature_key() :: String.t()
 
   @type t :: %Feature{

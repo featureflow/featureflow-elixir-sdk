@@ -1,4 +1,9 @@
 defmodule Featureflow.Client.Evaluate do
+  @moduledoc """
+  Represents Evaluate instanse functions and underlined datastructure from spec
+  see: https://github.com/featureflow/featureflow-sdk-implementation-guide/blob/master/Implementation/3.Evaluate.md
+  """
+
   alias __MODULE__
   alias Featureflow.Client
   alias Featureflow.{User, Feature, Events, Event}

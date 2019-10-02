@@ -6,7 +6,7 @@ defmodule Featureflow.Event do
   @type t() :: %Event{
           featureKey: Feature.feature_key(),
           evaluatedVariant: String.t(),
-          expectedVariant: String.t(),
+          expectedVariant: String.t() | nil,
           user: User.t()
         }
 

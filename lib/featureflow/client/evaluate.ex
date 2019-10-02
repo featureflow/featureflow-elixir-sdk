@@ -1,10 +1,10 @@
 defmodule Featureflow.Client.Evaluate do
   alias __MODULE__
   alias Featureflow.Client
-  alias Featureflow.{User, Events, Event}
+  alias Featureflow.{User, Feature, Events, Event}
 
   @type t() :: %Evaluate{
-          client: Client.t(),
+          client: Client.t() | nil,
           value: String.t(),
           featureKey: Feature.feature_key(),
           user: User.t()
@@ -20,7 +20,6 @@ defmodule Featureflow.Client.Evaluate do
   @doc "Evaluate.value() returns raw evaluated value"
   def value(%Evaluate{value: value} = evaluate) do
     publish_evaluate(evaluate, nil)
-    value
   end
 
   @doc "Evaluate.is() checks if evaluate value is equal to expected one"

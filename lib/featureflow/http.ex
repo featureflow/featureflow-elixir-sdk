@@ -6,7 +6,7 @@ defmodule Featureflow.Http do
 
   def start_link(), do: @http_module.start_link()
 
-  @spec request(atom(), String.t(), [:proplists.property()], term()) :: map()
+  @spec request(atom(), String.t(), headers, term()) :: {:ok, headers, map()} | {:error, pos_integer(), String.t()} | {:error, any()} when headers: [{String.t(), String.t()}]
   def request(method, url, headers, body) do
     @http_module.request(method, url, headers, body)
   end

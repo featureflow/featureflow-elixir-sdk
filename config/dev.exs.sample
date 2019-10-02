@@ -1,0 +1,8 @@
+use Mix.Config
+
+config :featureflow,
+  http_request_module: Featureflow.Http.Live,
+  api_endpoint: "https://api.featureflow.io/api/sdk/v1",
+  apiKeys: [
+    "srv-env-your-server-api-key"
+  ]

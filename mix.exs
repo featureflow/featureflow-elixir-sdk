@@ -28,7 +28,8 @@ defmodule Featureflow.MixProject do
     [
       {:hackney, github: "benoitc/hackney"},
       {:poison, "~> 4.0"},
-      {:ex_machina, "~> 2.3"},
+      {:cabbage, "~> 0.3.0"},
+      {:faker, "~> 0.7"},
       {:dialyxir, "~> 1.0.0-rc.7", only: [:dev, :test], runtime: false}
     ]
   end

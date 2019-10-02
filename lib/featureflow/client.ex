@@ -4,6 +4,8 @@ defmodule Featureflow.Client do
   alias Featureflow.Feature.Rule
   alias Featureflow.Client.Evaluate
 
+  @compile if Mix.env == :test, do: :export_all
+
   @defaultFeatureVariant "off"
 
   @type t() :: pid()
@@ -25,16 +27,13 @@ defmodule Featureflow.Client do
           user: user
         }
 
-      {:default, default} ->
+      _ ->
         %Evaluate{
           client: client,
-          value: default,
+          value: @defaultFeatureVariant,
           featureKey: feature_key,
           user: user
         }
-
-      _ ->
-        @defaultFeatureVariant
     end
   end
 
@@ -43,8 +42,7 @@ defmodule Featureflow.Client do
   @spec evaluate_rules(Feature.t(), User.t()) :: Evaluate.t()
   defp evaluate_rules(%Feature{rules: rules} = feature, user) do
     value =
-      rules
-      |> Enum.reduce_while(feature, &maybe_evaluate_rule(struct(%Rule{}, &1), &2, user))
+      Enum.reduce_while(rules, feature, &maybe_evaluate_rule(struct(%Rule{}, &1), &2, user))
 
     %Evaluate{
       value: value,
@@ -119,16 +117,16 @@ defmodule Featureflow.Client do
 
   defp evaluate_operator("greaterThan", attr, [val | _]) when is_number(attr), do: attr > val
 
-  defp evaluate_operator("greaterOrEqualThan", attr, [val | _]) when is_number(attr),
+  defp evaluate_operator("greaterThanOrEqual", attr, [val | _]) when is_number(attr),
     do: attr >= val
 
   defp evaluate_operator("lessThan", attr, [val | _]) when is_number(attr), do: attr < val
-  defp evaluate_operator("lessOrEqualThan", attr, [val | _]) when is_number(attr), do: attr <= val
+  defp evaluate_operator("lessThanOrEqual", attr, [val | _]) when is_number(attr), do: attr <= val
 
   defp evaluate_operator("after", attr, [val | _]) when is_binary(attr) do
     with {:ok, first, _} <- DateTime.from_iso8601(attr),
          {:ok, second, _} <- DateTime.from_iso8601(val) do
-      first > second
+      DateTime.compare(first, second) == :gt
     else
       _ ->
         false
@@ -138,7 +136,7 @@ defmodule Featureflow.Client do
   defp evaluate_operator("before", attr, [val | _]) when is_binary(attr) do
     with {:ok, first, _} <- DateTime.from_iso8601(attr),
          {:ok, second, _} <- DateTime.from_iso8601(val) do
-      first < second
+      DateTime.compare(first, second) == :lt
     else
       _ ->
         false
@@ -150,8 +148,6 @@ defmodule Featureflow.Client do
   end
 
   defp evaluate_rule(rule, %Feature{variationSalt: variationSalt} = feature, user) do
-    IO.inspect(rule)
-
     variationSalt
     |> calculateHash(feature.key, user.key)
     |> getVariantValue()

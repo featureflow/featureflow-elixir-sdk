@@ -8,6 +8,7 @@ defmodule Featureflow.Http.Live do
       new_headers =
         :proplists.get_value("ETag", resp_headers, nil)
         |> update_etag(headers)
+
       {:ok, new_headers, data}
     else
       {:ok, code, _resp_headers, ref} ->

@@ -11,7 +11,7 @@ defmodule Featureflow.Application do
       # Starts a worker by calling: Featureflow.Worker.start_link(arg)
       # {Featureflow.Worker, arg}
       {Featureflow.Http, []},
-      Featureflow.Supervisor,
+      Featureflow.Supervisor
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html

@@ -38,12 +38,12 @@ defmodule Featureflow.PollingClient do
   def handle_info(:timeout, %{url: url, client: client, headers: headers} = state) do
     case Http.request(:get, url, headers, "") do
       {:ok, new_headers, features} ->
-
         features
         |> Enum.map(fn {feature_key, v} -> {{client, feature_key}, v} end)
         |> (&:ets.insert(:features, &1)).()
 
         {:noreply, %{state | headers: new_headers}, @timeout}
+
       {:error, _, _} ->
         {:noreply, state, @timeout}
 
@@ -56,5 +56,4 @@ defmodule Featureflow.PollingClient do
     IO.inspect("Unexpected message #{inspect(msg)} in #{__MODULE__}")
     {:noreply, state, @timeout}
   end
-
 end

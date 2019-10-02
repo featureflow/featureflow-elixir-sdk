@@ -18,7 +18,7 @@ defmodule Featureflow.ClientTest do
     |> Faker.Util.list(fn n ->
       feature(enabled: rem(n, 2) == 0, defaultRule: rem(n, 3) == 0)
     end)
-    |> Enum.map(&({{client, &1.key}, &1}))
+    |> Enum.map(&{{client, &1.key}, &1})
     |> (&:ets.insert(:features, &1)).()
 
     {:ok, Map.put(context, :client, client)}
@@ -26,15 +26,15 @@ defmodule Featureflow.ClientTest do
 
   describe "Featureflow.Client.evaluate/2 tests" do
     test "Evaluate returns defaultFeatureVariant (off) when client is nil" do
-      assert %Evaluate{value: @defaultFeatureVariant} = Client.evaluate(nil, Faker.Lorem.word(), %User{})
+      assert %Evaluate{value: @defaultFeatureVariant} =
+               Client.evaluate(nil, Faker.Lorem.word(), %User{})
     end
 
     test "Evaluate returns offVariantKey (off) for disabled feature", %{client: client} do
-      test_feature = 
-        feature(enabled: false)
+      test_feature = feature(enabled: false)
 
       test_feature
-      |> (&({{client, &1.key}, &1})).()
+      |> (&{{client, &1.key}, &1}).()
       |> (&:ets.insert(:features, &1)).()
 
       assert %Evaluate{} = evaluate = Client.evaluate(client, test_feature.key, %User{})
@@ -57,50 +57,45 @@ defmodule Featureflow.ClientTest do
     end
 
     test "Evaluate returns one of variantSplits keys for feature default rule", %{client: client} do
+      %{rules: [rule]} = test_feature = feature()
 
-      %{rules: [rule]} = test_feature = 
-        feature()
-
-       test_feature
-      |> (&({{client, &1.key}, &1})).()
+      test_feature
+      |> (&{{client, &1.key}, &1}).()
       |> (&:ets.insert(:features, &1)).()
 
-      values =
-        Enum.map(rule.variantSplits, &(&1.variantKey))
+      values = Enum.map(rule.variantSplits, & &1.variantKey)
 
       assert %Evaluate{} = evaluate = Client.evaluate(client, test_feature.key, %User{})
       assert evaluate.client == client
       assert evaluate.value in values
     end
 
-    test "Evaluate returns one of variantSplits keys for feature w/o conditions", %{client: client} do
+    test "Evaluate returns one of variantSplits keys for feature w/o conditions", %{
+      client: client
+    } do
+      %{rules: [rule]} = test_feature = feature(conditions: false, defaultRule: false)
 
-      %{rules: [rule]} = test_feature = 
-        feature(conditions: false, defaultRule: false)
-
-       test_feature
-      |> (&({{client, &1.key}, &1})).()
+      test_feature
+      |> (&{{client, &1.key}, &1}).()
       |> (&:ets.insert(:features, &1)).()
 
-      values =
-        Enum.map(rule.variantSplits, &(&1.variantKey))
+      values = Enum.map(rule.variantSplits, & &1.variantKey)
 
       assert %Evaluate{} = evaluate = Client.evaluate(client, test_feature.key, %User{})
       assert evaluate.client == client
       assert evaluate.value in values
     end
 
-    test "Evaluate returns one of variantSplits keys for feature if conditions met", %{client: client} do
+    test "Evaluate returns one of variantSplits keys for feature if conditions met", %{
+      client: client
+    } do
+      %{rules: [rule]} = test_feature = feature(defaultRule: false, operator: "equals")
 
-      %{rules: [rule]} = test_feature = 
-        feature(defaultRule: false, operator: "equals")
-
-       test_feature
-      |> (&({{client, &1.key}, &1})).()
+      test_feature
+      |> (&{{client, &1.key}, &1}).()
       |> (&:ets.insert(:features, &1)).()
 
-      values =
-        Enum.map(rule.variantSplits, &(&1.variantKey))
+      values = Enum.map(rule.variantSplits, & &1.variantKey)
 
       [condition | _] = rule.audience.conditions
 
@@ -108,7 +103,8 @@ defmodule Featureflow.ClientTest do
         key: Faker.Lorem.word(),
         attributes: %{
           condition.target => condition.values
-        }}
+        }
+      }
 
       assert %Evaluate{} = evaluate = Client.evaluate(client, test_feature.key, user)
       assert evaluate.client == client
@@ -142,23 +138,24 @@ defmodule Featureflow.ClientTest do
                 split: Faker.random_between(0, 100)
               }
             ]
-        }
+          }
         else
           %{
             defaultRule: defaultRule,
             audience: %{
-              conditions: if conditions == true do
-                [
-                  %{
-                    target: Faker.Lorem.word(),
-                    operator: operator,
-                    values: Faker.Util.list(5, fn _ -> Faker.random_between(0, 10) end)
-                  }
-                ]
-              else
-                nil
-              end
-                },
+              conditions:
+                if conditions == true do
+                  [
+                    %{
+                      target: Faker.Lorem.word(),
+                      operator: operator,
+                      values: Faker.Util.list(5, fn _ -> Faker.random_between(0, 10) end)
+                    }
+                  ]
+                else
+                  nil
+                end
+            },
             variantSplits: [
               %{
                 variantKey: Faker.Lorem.word(),
@@ -169,7 +166,7 @@ defmodule Featureflow.ClientTest do
                 split: 100
               }
             ]
-        }
+          }
         end
       ]
     }
@@ -181,185 +178,216 @@ defmodule Featureflow.ClientTest do
 
       # Equals
       [
-        Faker.Lorem.word(), # string
-        Faker.random_between(0, 65536), # number
-        Faker.DateTime.backward(0) # Date or DateTime
+        # string
+        Faker.Lorem.word(),
+        # number
+        Faker.random_between(0, 65536),
+        # Date or DateTime
+        Faker.DateTime.backward(0)
       ]
-      |> Enum.each(
-        fn context_value ->
-        target_values = [context_value | Faker.Util.list(Faker.random_between(0, 100), &(&1))]
+      |> Enum.each(fn context_value ->
+        target_values = [context_value | Faker.Util.list(Faker.random_between(0, 100), & &1)]
         assert Client.evaluate_operator(op, context_value, target_values)
-      end
-      )
-      
+      end)
+
       # Not equals
       [
-        Faker.Lorem.word(), # string
-        Faker.random_between(10, 65536), # number
-        Faker.DateTime.backward(0) # Date or DateTime
+        # string
+        Faker.Lorem.word(),
+        # number
+        Faker.random_between(10, 65536),
+        # Date or DateTime
+        Faker.DateTime.backward(0)
       ]
-      |> Enum.each(
-        fn context_value ->
-          target_values = [Faker.Util.list(Faker.random_between(0, 100), &(&1))]
+      |> Enum.each(fn context_value ->
+        target_values = [Faker.Util.list(Faker.random_between(0, 100), & &1)]
         refute Client.evaluate_operator(op, context_value, target_values)
-      end
-      )
+      end)
     end
 
     test "'contains' works for strings" do
       op = "contains"
-      context_value = Faker.Lorem.word() # string
-      len = 
+      # string
+      context_value = Faker.Lorem.word()
+
+      len =
         context_value
         |> String.length()
         |> div(2)
 
-      value = 
+      value =
         String.slice(context_value, Faker.random_between(0, len), Faker.random_between(1, len))
-      target_values = [value | Faker.Util.list(Faker.random_between(0, 100), &(&1))]
+
+      target_values = [value | Faker.Util.list(Faker.random_between(0, 100), & &1)]
 
       assert Client.evaluate_operator(op, context_value, target_values)
-      
+
       # Not
-      target_values = [Faker.StarWars.quote() | Faker.Util.list(Faker.random_between(0, 100), &(&1))]
+      target_values = [
+        Faker.StarWars.quote() | Faker.Util.list(Faker.random_between(0, 100), & &1)
+      ]
+
       refute Client.evaluate_operator(op, context_value, target_values)
     end
 
     test "'startsWith' works for strings" do
       op = "startsWith"
-      context_value = Faker.Lorem.word() # string
-      len = 
+      # string
+      context_value = Faker.Lorem.word()
+
+      len =
         context_value
         |> String.length()
         |> div(2)
 
-      value = 
-        String.slice(context_value, 0, Faker.random_between(1, len))
-      target_values = [value | Faker.Util.list(Faker.random_between(0, 100), &(&1))]
+      value = String.slice(context_value, 0, Faker.random_between(1, len))
+      target_values = [value | Faker.Util.list(Faker.random_between(0, 100), & &1)]
 
       assert Client.evaluate_operator(op, context_value, target_values)
-      
+
       # Not
-      target_values = [Faker.StarWars.quote() | Faker.Util.list(Faker.random_between(0, 100), &(&1))]
+      target_values = [
+        Faker.StarWars.quote() | Faker.Util.list(Faker.random_between(0, 100), & &1)
+      ]
+
       refute Client.evaluate_operator(op, context_value, target_values)
     end
 
     test "'endsWith' works for strings" do
       op = "endsWith"
-      context_value = Faker.Lorem.word() # string
-      len = 
+      # string
+      context_value = Faker.Lorem.word()
+
+      len =
         context_value
         |> String.length()
         |> div(2)
 
-      value = 
-        String.slice(context_value, Faker.random_between(0, len), len * 5)
-      target_values = [value | Faker.Util.list(Faker.random_between(0, 100), &(&1))]
+      value = String.slice(context_value, Faker.random_between(0, len), len * 5)
+      target_values = [value | Faker.Util.list(Faker.random_between(0, 100), & &1)]
 
       assert Client.evaluate_operator(op, context_value, target_values)
-      
+
       # Not
-      target_values = [Faker.StarWars.quote() | Faker.Util.list(Faker.random_between(0, 100), &(&1))]
+      target_values = [
+        Faker.StarWars.quote() | Faker.Util.list(Faker.random_between(0, 100), & &1)
+      ]
+
       refute Client.evaluate_operator(op, context_value, target_values)
     end
 
     test "'matches' works for strings" do
       op = "matches"
-      context_value = Faker.Lorem.word() # string
-      len = 
+      # string
+      context_value = Faker.Lorem.word()
+
+      len =
         context_value
         |> String.length()
         |> div(2)
 
-      value = 
+      value =
         context_value
         |> String.slice(Faker.random_between(0, len), Faker.random_between(1, len))
-        |> (&(".*#{&1}.*")).()
+        |> (&".*#{&1}.*").()
 
-      target_values = [value | Faker.Util.list(Faker.random_between(0, 100), &(&1))]
+      target_values = [value | Faker.Util.list(Faker.random_between(0, 100), & &1)]
 
       assert Client.evaluate_operator(op, context_value, target_values)
-      
+
       # Not
-      target_values = [Faker.StarWars.quote() | Faker.Util.list(Faker.random_between(0, 100), &(&1))]
+      target_values = [
+        Faker.StarWars.quote() | Faker.Util.list(Faker.random_between(0, 100), & &1)
+      ]
+
       refute Client.evaluate_operator(op, context_value, target_values)
     end
 
     test "'in' works for strings" do
       op = "in"
-      context_value = Faker.Lorem.word() # string
+      # string
+      context_value = Faker.Lorem.word()
 
-      target_values = [context_value | Faker.Util.list(Faker.random_between(0, 100), &(&1))]
+      target_values = [context_value | Faker.Util.list(Faker.random_between(0, 100), & &1)]
 
       assert Client.evaluate_operator(op, context_value, target_values)
-      
+
       # Not
-      target_values = [Faker.StarWars.quote() | Faker.Util.list(Faker.random_between(0, 100), &(&1))]
+      target_values = [
+        Faker.StarWars.quote() | Faker.Util.list(Faker.random_between(0, 100), & &1)
+      ]
+
       refute Client.evaluate_operator(op, context_value, target_values)
     end
 
     test "'notIn' works for strings" do
       op = "notIn"
-      context_value = Faker.Lorem.word() # string
+      # string
+      context_value = Faker.Lorem.word()
 
-      target_values = [Faker.StarWars.quote() | Faker.Util.list(Faker.random_between(0, 100), &(&1))]
+      target_values = [
+        Faker.StarWars.quote() | Faker.Util.list(Faker.random_between(0, 100), & &1)
+      ]
+
       assert Client.evaluate_operator(op, context_value, target_values)
 
       # Not
-      target_values = [context_value | Faker.Util.list(Faker.random_between(0, 100), &(&1))]
+      target_values = [context_value | Faker.Util.list(Faker.random_between(0, 100), & &1)]
 
       refute Client.evaluate_operator(op, context_value, target_values)
     end
 
     test "'before' works for dates" do
       op = "before"
-      context_value = 
+
+      context_value =
         0
         |> Faker.DateTime.backward()
         |> DateTime.to_iso8601()
 
       value_true =
         10
-        |> Faker.DateTime.forward() 
+        |> Faker.DateTime.forward()
         |> DateTime.to_iso8601()
 
-      target_values = [value_true | Faker.Util.list(Faker.random_between(0, 100), &(&1))]
+      target_values = [value_true | Faker.Util.list(Faker.random_between(0, 100), & &1)]
 
       assert Client.evaluate_operator(op, context_value, target_values)
-      
+
       # Not
       value_false =
         10
-        |> Faker.DateTime.backward() 
+        |> Faker.DateTime.backward()
         |> DateTime.to_iso8601()
 
-      target_values = [value_false | Faker.Util.list(Faker.random_between(0, 100), &(&1))]
+      target_values = [value_false | Faker.Util.list(Faker.random_between(0, 100), & &1)]
       refute Client.evaluate_operator(op, context_value, target_values)
     end
 
     test "'after' works for dates" do
       op = "after"
-      context_value = 
+
+      context_value =
         0
         |> Faker.DateTime.forward()
         |> DateTime.to_iso8601()
 
       value_true =
         10
-        |> Faker.DateTime.backward() 
+        |> Faker.DateTime.backward()
         |> DateTime.to_iso8601()
 
-      target_values = [value_true | Faker.Util.list(Faker.random_between(0, 100), &(&1))]
+      target_values = [value_true | Faker.Util.list(Faker.random_between(0, 100), & &1)]
 
       assert Client.evaluate_operator(op, context_value, target_values)
-      
+
       # Not
       value_false =
         10
-        |> Faker.DateTime.forward() 
+        |> Faker.DateTime.forward()
         |> DateTime.to_iso8601()
 
-      target_values = [value_false | Faker.Util.list(Faker.random_between(0, 100), &(&1))]
+      target_values = [value_false | Faker.Util.list(Faker.random_between(0, 100), & &1)]
       refute Client.evaluate_operator(op, context_value, target_values)
     end
 
@@ -367,13 +395,20 @@ defmodule Featureflow.ClientTest do
       op = "greaterThan"
       context_value = Faker.random_between(0, 65536)
 
-      target_values = [context_value - Faker.random_between(1, context_value) | Faker.Util.list(Faker.random_between(0, 100), &(&1))]
+      target_values = [
+        context_value - Faker.random_between(1, context_value)
+        | Faker.Util.list(Faker.random_between(0, 100), & &1)
+      ]
 
       assert Client.evaluate_operator(op, context_value, target_values)
-      
+
       # Not
 
-      target_values = [context_value + Faker.random_between(1, context_value) | Faker.Util.list(Faker.random_between(0, 100), &(&1))]
+      target_values = [
+        context_value + Faker.random_between(1, context_value)
+        | Faker.Util.list(Faker.random_between(0, 100), & &1)
+      ]
+
       refute Client.evaluate_operator(op, context_value, target_values)
     end
 
@@ -381,13 +416,20 @@ defmodule Featureflow.ClientTest do
       op = "lessThan"
       context_value = Faker.random_between(0, 65536)
 
-      target_values = [context_value + Faker.random_between(1, context_value) | Faker.Util.list(Faker.random_between(0, 100), &(&1))]
+      target_values = [
+        context_value + Faker.random_between(1, context_value)
+        | Faker.Util.list(Faker.random_between(0, 100), & &1)
+      ]
 
       assert Client.evaluate_operator(op, context_value, target_values)
-      
+
       # Not
 
-      target_values = [context_value - Faker.random_between(1, context_value) | Faker.Util.list(Faker.random_between(0, 100), &(&1))]
+      target_values = [
+        context_value - Faker.random_between(1, context_value)
+        | Faker.Util.list(Faker.random_between(0, 100), & &1)
+      ]
+
       refute Client.evaluate_operator(op, context_value, target_values)
     end
 
@@ -396,18 +438,25 @@ defmodule Featureflow.ClientTest do
       context_value = Faker.random_between(0, 65536)
 
       # Equal
-      target_values_equal = [context_value | Faker.Util.list(Faker.random_between(0, 100), &(&1))]
+      target_values_equal = [context_value | Faker.Util.list(Faker.random_between(0, 100), & &1)]
 
       assert Client.evaluate_operator(op, context_value, target_values_equal)
 
       # or greater
-      target_values_greater = [context_value - Faker.random_between(1, context_value) | Faker.Util.list(Faker.random_between(0, 100), &(&1))]
+      target_values_greater = [
+        context_value - Faker.random_between(1, context_value)
+        | Faker.Util.list(Faker.random_between(0, 100), & &1)
+      ]
 
       assert Client.evaluate_operator(op, context_value, target_values_greater)
-      
+
       # Not
 
-      target_values = [context_value + Faker.random_between(1, context_value) | Faker.Util.list(Faker.random_between(0, 100), &(&1))]
+      target_values = [
+        context_value + Faker.random_between(1, context_value)
+        | Faker.Util.list(Faker.random_between(0, 100), & &1)
+      ]
+
       refute Client.evaluate_operator(op, context_value, target_values)
     end
 
@@ -416,18 +465,25 @@ defmodule Featureflow.ClientTest do
       context_value = Faker.random_between(0, 65536)
 
       # Equal
-      target_values_equal = [context_value | Faker.Util.list(Faker.random_between(0, 100), &(&1))]
+      target_values_equal = [context_value | Faker.Util.list(Faker.random_between(0, 100), & &1)]
 
       assert Client.evaluate_operator(op, context_value, target_values_equal)
 
       # or less
-      target_values_less = [context_value + Faker.random_between(1, context_value) | Faker.Util.list(Faker.random_between(0, 100), &(&1))]
+      target_values_less = [
+        context_value + Faker.random_between(1, context_value)
+        | Faker.Util.list(Faker.random_between(0, 100), & &1)
+      ]
 
       assert Client.evaluate_operator(op, context_value, target_values_less)
-      
+
       # Not
 
-      target_values = [context_value - Faker.random_between(1, context_value) | Faker.Util.list(Faker.random_between(0, 100), &(&1))]
+      target_values = [
+        context_value - Faker.random_between(1, context_value)
+        | Faker.Util.list(Faker.random_between(0, 100), & &1)
+      ]
+
       refute Client.evaluate_operator(op, context_value, target_values)
     end
 
@@ -435,7 +491,7 @@ defmodule Featureflow.ClientTest do
       op = Faker.Lorem.word()
       context_value = Faker.random_between(0, 65536)
 
-      target_values = [Faker.Util.list(Faker.random_between(0, 100), &(&1))]
+      target_values = [Faker.Util.list(Faker.random_between(0, 100), & &1)]
 
       refute Client.evaluate_operator(op, context_value, target_values)
     end

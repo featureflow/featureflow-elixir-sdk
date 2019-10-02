@@ -33,16 +33,16 @@ defmodule Featureflow.Http.Sandbox do
 
   @impl true
   def handle_call({:request, data}, {from, _ref}, %{calls: calls, response: :ok} = state) do
-    my_calls = 
+    my_calls =
       calls
       |> Map.get(from, [])
-      |> (&([data | &1])).()
+      |> (&[data | &1]).()
 
     {:reply, {:ok, [], %{}}, %{state | calls: Map.put(calls, from, my_calls)}}
   end
 
   def handle_call({:url_requested, url}, _from, %{calls: calls, response: :ok} = state) do
-    is_called = 
+    is_called =
       calls
       |> Map.values()
       |> Enum.concat()
@@ -51,15 +51,18 @@ defmodule Featureflow.Http.Sandbox do
     {:reply, is_called, state}
   end
 
-  def handle_call({:url_requested_by_pid, url, pid}, _from, %{calls: calls, response: :ok} = state) do
-    is_called = 
+  def handle_call(
+        {:url_requested_by_pid, url, pid},
+        _from,
+        %{calls: calls, response: :ok} = state
+      ) do
+    is_called =
       calls
       |> Map.get(pid, [])
       |> List.keymember?(url, 1)
 
     {:reply, is_called, state}
   end
-
 
   def handle_call(msg, _from, state) do
     IO.inspect("Unexpected message #{inspect(msg)} in #{__MODULE__}")
@@ -68,6 +71,7 @@ defmodule Featureflow.Http.Sandbox do
 
   @impl true
   def handle_cast(:clear, state), do: {:noreply, %{state | calls: %{}}}
+
   def handle_cast(msg, state) do
     IO.inspect("Unexpected message #{inspect(msg)} in #{__MODULE__}")
     {:reply, state}

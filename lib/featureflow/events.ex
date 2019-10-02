@@ -89,5 +89,4 @@ defmodule Featureflow.Events do
     IO.inspect("Unexpected message #{inspect(msg)} in #{__MODULE__}")
     {:noreply, state, @timeout}
   end
-
 end

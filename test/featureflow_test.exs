@@ -10,7 +10,6 @@ defmodule FeatureflowTest do
 
   describe "Featureflow.init/2 tests" do
     test "init/1 without config returns Client.t() or pid", %{base_url: base_url} do
-      
       assert is_pid(Featureflow.init("test1"))
       refute Featureflow.Http.Sandbox.is_url_requested("#{base_url}/register")
     end
@@ -23,21 +22,25 @@ defmodule FeatureflowTest do
     end
 
     test "init/1 with config registers new features", %{base_url: base_url} do
-      result = Featureflow.init("test1", 
-        %{
-          withFeatures: [
-            %{
-              key: "test",
-              failoverVariant: "off",
-              variants:  [
-                %{
-                  key: "off",
-                  name: "Off"
-                }
-              ]
-            }
-          ]
-        })
+      result =
+        Featureflow.init(
+          "test1",
+          %{
+            withFeatures: [
+              %{
+                key: "test",
+                failoverVariant: "off",
+                variants: [
+                  %{
+                    key: "off",
+                    name: "Off"
+                  }
+                ]
+              }
+            ]
+          }
+        )
+
       assert is_pid(result)
       :timer.sleep(100)
       assert Featureflow.Http.Sandbox.is_url_requested("#{base_url}/register")

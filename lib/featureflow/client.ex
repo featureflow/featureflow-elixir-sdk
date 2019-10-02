@@ -4,7 +4,7 @@ defmodule Featureflow.Client do
   alias Featureflow.Feature.Rule
   alias Featureflow.Client.Evaluate
 
-  @compile if Mix.env == :test, do: :export_all
+  @compile if Mix.env() == :test, do: :export_all
 
   @defaultFeatureVariant "off"
 
@@ -41,8 +41,7 @@ defmodule Featureflow.Client do
 
   @spec evaluate_rules(Feature.t(), User.t()) :: Evaluate.t()
   defp evaluate_rules(%Feature{rules: rules} = feature, user) do
-    value =
-      Enum.reduce_while(rules, feature, &maybe_evaluate_rule(struct(%Rule{}, &1), &2, user))
+    value = Enum.reduce_while(rules, feature, &maybe_evaluate_rule(struct(%Rule{}, &1), &2, user))
 
     %Evaluate{
       value: value,

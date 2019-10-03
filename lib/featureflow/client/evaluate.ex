@@ -23,7 +23,7 @@ defmodule Featureflow.Client.Evaluate do
 
   @spec value(Evaluate.t()) :: String.t()
   @doc "Evaluate.value() returns raw evaluated value"
-  def value(%Evaluate{value: value} = evaluate) do
+  def value(%Evaluate{} = evaluate) do
     publish_evaluate(evaluate, nil)
   end
 

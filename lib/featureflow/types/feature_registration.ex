@@ -1,5 +1,6 @@
 defmodule Featureflow.FeatureRegistration do
   alias __MODULE__
+
   @moduledoc """
   FeatureRegistration type validation and implementtion.
   See https://github.com/featureflow/featureflow-sdk-implementation-guide/blob/master/Implementation/objects/FeatureRegistration.md

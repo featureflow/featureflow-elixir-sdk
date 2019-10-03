@@ -10,9 +10,9 @@ defmodule Featureflow.MixProject do
       package: package(),
       start_permanent: Mix.env() == :prod,
       deps: deps(),
-	  name: "Featureflow",
-	  homepage_url: "https://featureflow.io",
-	  source_url: "https://github.com/featureflow/featureflow-elixir-sdk",
+      name: "Featureflow",
+      homepage_url: "https://featureflow.io",
+      source_url: "https://github.com/featureflow/featureflow-elixir-sdk",
       dialyzer: [
         plt_add_deps: :project
       ]
@@ -34,22 +34,23 @@ defmodule Featureflow.MixProject do
 
   def package() do
     [
-	  name: "featureflow",
+      name: "featureflow",
       licenses: ["Apache-2.0"],
       links: %{
         "GitHub" => "https://github.com/featureflow/featureflow-elixir-sdk"
-	  },
-
+      },
+      #build_tools: [:mix, :rebar]
     ]
   end
 
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:hackney, github: "benoitc/hackney"},
+      {:hackney, "~> 1.15"},
       {:poison, "~> 4.0"},
       {:cabbage, "~> 0.3.0"},
       {:faker, "~> 0.7"},
+      {:ex_doc, "~> 0.21", only: :dev, runtime: false},
       {:dialyxir, "~> 1.0.0-rc.7", only: [:dev, :test], runtime: false}
     ]
   end

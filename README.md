@@ -33,7 +33,7 @@ mix do deps.get, deps.compile
 ```
 
 ## Usage
-Here is a simple example of running your feature that prints "I'm enables" on the screen.
+Here is a simple example of running your feature that prints "Feature evaluated" on the screen.
 ```elixir
 defmodule MySimpleFeature do
     alias Featureflow.{User, Client}

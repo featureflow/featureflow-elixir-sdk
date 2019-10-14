@@ -7,17 +7,15 @@ workflows:
       - test
 
 elixir-docker-template: &elixir-docker-template
+  working_directory: ~/repo
   steps:
     - checkout
-    - run:
-        name: get snd compile
-        command: mix do deps.get, deps.compile
-    - run:
-        name: test
-        command: mix test
+    - run: mix deps.get
+    - run: mix deps.compile
+    - run: mix test
 
 jobs:
   test:
     <<: *elixir-docker-template
     docker:
-      - image: circleci/elixir:otp-22
+      - image: circleci/elixir:1.4

@@ -21,4 +21,4 @@ jobs:
   test:
     <<: *elixir-docker-template
     docker:
-      - image: circleci/elixir:1.4
+      - image: circleci/elixir:otp-22

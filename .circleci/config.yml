@@ -10,7 +10,7 @@ elixir-docker-template: &elixir-docker-template
   working_directory: ~/repo
   steps:
     - checkout
-    - cp config/dev.exs.sample config/dev.exs
+    - run: cp config/dev.exs.sample config/dev.exs
     - run: mix deps.get
     - run: mix deps.compile
     - run: mix test

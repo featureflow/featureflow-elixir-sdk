@@ -27,10 +27,10 @@ defmodule Featureflow.Client do
   @doc "FeatureflowClient.evaluate implemetation"
   @spec evaluate(Client.t(), Feature.feature_key(), User.t()) :: Evaluate.t()
   def evaluate(client, feature_key, user) do
-    with [{_, feaure_map}] <- :ets.lookup(:features, {client, feature_key}),
-         {true, _} <- is_enabled(feaure_map) do
+    with [{_, feature_map}] <- :ets.lookup(:features, {client, feature_key}),
+         {true, _} <- is_enabled(feature_map) do
       %Feature{}
-      |> struct(feaure_map)
+      |> struct(feature_map)
       |> evaluate_rules(user)
       |> Map.put(:client, client)
     else

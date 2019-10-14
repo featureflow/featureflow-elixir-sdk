@@ -117,7 +117,7 @@ defmodule Featureflow.ClientTest do
     defaultRule = Keyword.get(opts, :defaultRule, true)
     operator = opts[:operator] || Faker.Util.pick(@operators)
     conditions = Keyword.get(opts, :conditions, true)
-
+    split1 = Faker.random_between(0, 100)
     %{
       key: Faker.Lorem.word(),
       variationSalt: Faker.Lorem.sentence(),
@@ -131,11 +131,11 @@ defmodule Featureflow.ClientTest do
             variantSplits: [
               %{
                 variantKey: Faker.Lorem.word(),
-                split: Faker.random_between(0, 100)
+                split: split1
               },
               %{
                 variantKey: Faker.Lorem.word(),
-                split: Faker.random_between(0, 100)
+                split: 100 - split1
               }
             ]
           }

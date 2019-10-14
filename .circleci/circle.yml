@@ -1,0 +1,23 @@
+version: 2
+
+workflows:
+  version: 2
+  test:
+    jobs:
+      - test
+
+elixir-docker-template: &elixir-docker-template
+  steps:
+    - checkout
+    - run:
+        name: get snd compile
+        command: mix do deps.get, deps.compile
+    - run:
+        name: test
+        command: mix test
+
+jobs:
+  test:
+    <<: *elixir-docker-template
+    docker:
+      - image: circleci/elixir:otp-22

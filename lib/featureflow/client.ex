@@ -165,7 +165,7 @@ defmodule Featureflow.Client do
     variationSalt
     |> calculateHash(feature.key, user.key)
     |> getVariantValue()
-    |> getVarintSplitKey(rule.variantSplits)
+    |> getVariantSplitKey(rule.variantSplits)
   end
 
   defp calculateHash(variationSalt, feature_key, user_key) do
@@ -181,7 +181,7 @@ defmodule Featureflow.Client do
     |> Kernel.+(1)
   end
 
-  def getVarintSplitKey(variant_value, vs) do
+  def getVariantSplitKey(variant_value, vs) do
     Enum.reduce_while(
       vs,
       0,
